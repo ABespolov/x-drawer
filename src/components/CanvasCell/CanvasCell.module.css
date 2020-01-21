@@ -1,0 +1,7 @@
+.canvasCell {
+    background: burlywood;
+    /*border: 1px solid blueviolet;*/
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
