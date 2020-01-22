@@ -4,12 +4,10 @@
 }
 
 .app__content {
-    height: 100%;
     display: flex;
     justify-content: center;
     align-items: flex-start;
     padding: 30px;
-    overflow: scroll;
 }
 
 .app__header {

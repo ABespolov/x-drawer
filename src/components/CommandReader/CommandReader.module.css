@@ -1,0 +1,13 @@
+.commandInput {
+    height: calc(500px - 40px - 10px);
+    margin-left: 30px;
+}
+
+.commandInput textarea {
+    height: 100%;
+}
+
+.commandInput__button {
+    height: 40px;
+    margin-top: 10px;
+}
