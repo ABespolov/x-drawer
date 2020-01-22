@@ -3,11 +3,17 @@
     margin-left: 30px;
 }
 
-.commandInput textarea {
+.commandInput__control,
+.commandInput__control textarea {
     height: 100%;
 }
 
 .commandInput__button {
+    margin-right: 10px;
+}
+
+.commandInput__controls {
+    display: flex;
     height: 40px;
     margin-top: 10px;
 }

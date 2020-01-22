@@ -6,7 +6,7 @@ import { trampoline } from '../../helpers/trampoline';
 import { BucketFill, CanvasSize, CommandTypes, DrawCommand } from '../CommandReader/CommandReader';
 
 export const MAX_CANVAS_SIZE = { width: 100, height: 100 }; // canvas maximum cells count
-const MAX_CANVAS_RESOLUTION = { width: 500, height: 500 }; // canvas size in px, cells size calculate dynamically in proportion to width and height
+export const MAX_CANVAS_RESOLUTION = { width: 500, height: 500 }; // canvas size in px, cells size calculate dynamically in proportion to width and height
 const DRAW_SYMBOL = 'X';
 
 export type Point = { x: number; y: number };
@@ -43,6 +43,7 @@ class Canvas extends React.Component<CanvasProps, CanvasState> {
         const drawCommands: DrawCommand[] = JSON.parse(JSON.stringify(this.state.drawCommands));
         const drawCommand = drawCommands.shift();
 
+        console.log(drawCommand);
         if (drawCommand) {
             switch (drawCommand.command) {
                 case CommandTypes.C:
@@ -75,9 +76,12 @@ class Canvas extends React.Component<CanvasProps, CanvasState> {
             canvasCellElements.push([]);
             for (let j = 0; j < width; j++) {
                 const cellRef = React.createRef<CanvasCell>();
+                const cellFontSize = MAX_CANVAS_RESOLUTION.width / canvasSize.width;
 
                 canvasCells[i].push({ cellRef });
-                canvasCellElements[i].push(<CanvasCell ref={canvasCells[i][j].cellRef} key={i + '' + j} />);
+                canvasCellElements[i].push(
+                    <CanvasCell fontSize={cellFontSize} ref={canvasCells[i][j].cellRef} key={i + '' + j} />,
+                );
             }
         }
 

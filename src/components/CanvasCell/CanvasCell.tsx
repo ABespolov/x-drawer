@@ -5,10 +5,14 @@ export interface CanvasCellType {
     cellRef: React.RefObject<CanvasCell>;
 }
 
-class CanvasCell extends React.Component<{}, {}> {
+interface CanvasCellProps {
+    fontSize: number;
+}
+
+class CanvasCell extends React.Component<CanvasCellProps, {}> {
     myRef: React.RefObject<HTMLDivElement>;
 
-    constructor(props: {}) {
+    constructor(props: CanvasCellProps) {
         super(props);
 
         this.myRef = React.createRef();
@@ -23,7 +27,7 @@ class CanvasCell extends React.Component<{}, {}> {
     };
 
     render() {
-        return <div ref={this.myRef} className={`${styles.canvasCell}`}></div>;
+        return <div ref={this.myRef} style={{ fontSize: this.props.fontSize }} className={`${styles.canvasCell}`} />;
     }
 }
 
