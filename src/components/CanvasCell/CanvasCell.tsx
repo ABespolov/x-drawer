@@ -1,17 +1,33 @@
 import React from 'react';
 import styles from './CanvasCell.module.css';
 
-export interface Cell {
-    filled: string;
+export interface CanvasCellType {
+    cellRef: React.RefObject<CanvasCell>;
 }
 
-interface CanvasCellProps {
-    filled: string;
-}
+class CanvasCell extends React.Component<any, any> {
+    myRef: React.RefObject<HTMLDivElement>;
 
-class CanvasCell extends React.Component<CanvasCellProps, {}> {
+    constructor(props: any) {
+        super(props);
+
+        this.myRef = React.createRef();
+    }
+    state = {
+        filled: '',
+    };
+
+    fillSelf = (symbol: string) => {
+        this.myRef.current!.innerHTML = symbol;
+    };
+
+    checkFill = () => {
+        return this.myRef.current!.innerHTML;
+    }
+
     render() {
-        return <div className={`has-text-weight-bold ${styles.canvasCell}`}>{this.props.filled}</div>;
+        //const style = {fontSize: `calc()`}
+        return <div ref={this.myRef} className={`${styles.canvasCell}`}></div>;
     }
 }
 

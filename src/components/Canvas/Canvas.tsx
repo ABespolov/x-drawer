@@ -1,10 +1,10 @@
 import React from 'react';
 import styles from './Canvas.module.css';
 
-import CanvasCell, { Cell } from '../CanvasCell/CanvasCell';
+import CanvasCell, { CanvasCellType } from '../CanvasCell/CanvasCell';
 
-const MAX_CANVAS_SIZE = 500;
-const CELL_SIZE = 20;
+const MAX_CANVAS_SIZE = { width: 600, height: 500 };
+const CANVAS_SIZE = { width: 300, height: 250 };
 
 type Point = { x: number; y: number };
 enum DrawDirections {
@@ -14,13 +14,15 @@ enum DrawDirections {
 
 interface CanvasState {
     canvasSize: { width: number; height: number };
-    canvasCells: Cell[][];
+    canvasCells: CanvasCellType[][];
+    canvasCellElements: React.ReactElement<CanvasCell>[][];
 }
 
 class Canvas extends React.Component<{}, CanvasState> {
     state = {
-        canvasSize: { width: 25, height: 25 },
-        canvasCells: new Array<Array<Cell>>(),
+        canvasSize: CANVAS_SIZE,
+        canvasCells: new Array<Array<CanvasCellType>>(),
+        canvasCellElements: new Array<Array<React.ReactElement<CanvasCell>>>(),
     };
 
     componentDidMount() {
@@ -30,15 +32,20 @@ class Canvas extends React.Component<{}, CanvasState> {
     generateCanvas = () => {
         const { width, height } = this.state.canvasSize;
         const canvasCells: CanvasState['canvasCells'] = [];
+        const canvasCellElements: React.ReactElement[][] = [];
 
         for (let i = 0; i < height; i++) {
             canvasCells.push([]);
+            canvasCellElements.push([]);
             for (let j = 0; j < width; j++) {
-                canvasCells[i].push({ filled: '' });
+                const cellRef = React.createRef<CanvasCell>();
+
+                canvasCells[i].push({ cellRef });
+                canvasCellElements[i].push(<CanvasCell ref={canvasCells[i][j].cellRef} key={i + '' + j} />);
             }
         }
 
-        this.setState({ canvasCells });
+        this.setState({ canvasCells, canvasCellElements });
     };
 
     drawLine = (point1: Point, point2: Point) => {
@@ -58,9 +65,9 @@ class Canvas extends React.Component<{}, CanvasState> {
 
         for (let i = startPoint; i <= lineLength + startPoint; i++) {
             if (drawDirection === DrawDirections.X) {
-                canvasCells[point1.y - 1][i - 1].filled = 'X';
+                canvasCells[point1.y - 1][i - 1].cellRef!.current!.fillSelf('X');
             } else {
-                canvasCells[i - 1][point1.x - 1].filled = 'X';
+                canvasCells[i - 1][point1.x - 1].cellRef!.current!.fillSelf('X');
             }
         }
 
@@ -96,20 +103,17 @@ class Canvas extends React.Component<{}, CanvasState> {
     };
 
     bucketFill = (point: Point) => {
-        const canvasCells = JSON.parse(JSON.stringify(this.state.canvasCells));
+        const { canvasCells } = this.state;
 
-        const a: any = this.trampoline(this.fillCells);
-        const newCells: any = a(point, canvasCells);
-
-        this.setState({ canvasCells });
+        this.trampoline(this.fillCells)(point, canvasCells);
     };
 
     fillCells = ({ x, y }: Point, canvasCells: CanvasState['canvasCells']): any => {
         const { canvasSize } = this.state;
         const acc: any = [];
         const addFn = ({ x, y }: Point) => {
-            if (!canvasCells[y][x].filled) {
-                canvasCells[y][x].filled = '0';
+            if (!canvasCells[y][x].cellRef.current!.checkFill()) {
+                canvasCells[y][x].cellRef.current!.fillSelf('o');
                 acc.push(() => this.fillCells({ x: x, y }, canvasCells));
             }
         };
@@ -127,47 +131,43 @@ class Canvas extends React.Component<{}, CanvasState> {
             addFn({ x, y: y + 1 });
         }
 
-        if (acc.length === 0) return [];
-        return acc;
-    };
-
-    getCellElements = (): React.ReactElement[][] => {
-        const { canvasCells } = this.state;
-        const { width, height } = this.state.canvasSize;
-        const cellElements: React.ReactElement[][] = [];
-
-        if (canvasCells.length !== 0) {
-            for (let i = 0; i < height; i++) {
-                cellElements.push([]);
-                for (let j = 0; j < width; j++) {
-                    const filled = canvasCells[i][j].filled;
-
-                    cellElements[i].push(<CanvasCell key={i + '' + j} filled={filled} />);
-                }
-            }
+        if (acc.length === 0) {
+            return [];
+        } else {
+            return acc;
         }
-
-        return cellElements;
     };
 
     render() {
         const { width, height } = this.state.canvasSize;
+        const { canvasCellElements } = this.state;
+        const scale = { width: 1, height: 1 };
+
+        if(CANVAS_SIZE.width > CANVAS_SIZE.height) {
+            scale.width = CANVAS_SIZE.width / CANVAS_SIZE.height;
+        } else {
+            scale.height = CANVAS_SIZE.height / CANVAS_SIZE.width;
+        }
+
         const canvasStyle = {
             width: MAX_CANVAS_SIZE,
             height: MAX_CANVAS_SIZE,
-            gridTemplate: `repeat(${height}, ${CELL_SIZE}px) / repeat(${width}, ${CELL_SIZE}px)`,
+            gridTemplate: `repeat(${height}, ${MAX_CANVAS_SIZE.height /
+                CANVAS_SIZE.height /
+                scale.width}px) / repeat(${width}, ${MAX_CANVAS_SIZE.width / CANVAS_SIZE.width / scale.height}px)`,
         };
 
         return (
             <div
+                // @ts-ignore
                 style={canvasStyle}
                 className={styles.canvas}
                 onClick={() => {
-                    this.drawRect({ x: 16, y: 1 }, { x: 23, y: 15 });
-                    this.bucketFill({ x: 1, y: 1 });
+                    this.drawRect({ x: 1, y: 1 }, { x: 5, y: 5 });
+                    this.bucketFill({ x: 9, y: 9 });
                 }}
             >
-                {this.getCellElements()}
+                {canvasCellElements}
             </div>
         );
     }
