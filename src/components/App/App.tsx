@@ -29,10 +29,7 @@ class App extends React.Component<any, AppState> {
             <div className={styles.app}>
                 <h1 className={`${styles.app__header} is-size-1 has-text-centered`}>X-Drawer</h1>
                 <div className={styles.app__content}>
-                    <Canvas
-                        key={JSON.stringify(drawCommands)}
-                        drawCommands={drawCommands}
-                    />
+                    <Canvas key={JSON.stringify(drawCommands)} drawCommands={drawCommands} />
                     <CommandReader
                         updateDrawCommands={this.setDrawCommands.bind(this)}
                         setDrawComplete={this.setDrawComplete.bind(this)}

@@ -36,7 +36,6 @@ class CommandReader extends React.Component<CommandReaderProps, CommandReaderSta
         let canvasSize = { width: 0, height: 0 };
         let validationData: DrawCommand['data'] | false = { width: 0, height: 0 };
 
-        console.log(commands);
         commands.forEach((command, index) => {
             switch (command[0]) {
                 case CommandTypes.C:
@@ -149,6 +148,7 @@ class CommandReader extends React.Component<CommandReaderProps, CommandReaderSta
                         <label className="file-label">
                             <input
                                 disabled={!isDrawComplete}
+                                accept=".txt"
                                 className="file-input"
                                 type="file"
                                 name="resume"

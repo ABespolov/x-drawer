@@ -4,6 +4,7 @@ import styles from './Canvas.module.css';
 import CanvasCell, { CanvasCellType } from '../CanvasCell/CanvasCell';
 import { trampoline } from '../../helpers/trampoline';
 import { BucketFill, CanvasSize, CommandTypes, DrawCommand } from '../CommandReader/CommandReader';
+import { strict } from 'assert';
 
 export const MAX_CANVAS_SIZE = { width: 100, height: 100 }; // canvas maximum cells count
 export const MAX_CANVAS_RESOLUTION = { width: 500, height: 500 }; // canvas size in px, cells size calculate dynamically in proportion to width and height
@@ -25,6 +26,7 @@ interface CanvasState {
     canvasCells: CanvasCellType[][];
     canvasCellElements: React.ReactElement<CanvasCell>[][];
     drawCommands: DrawCommand[];
+    prevColor: string;
 }
 
 class Canvas extends React.Component<CanvasProps, CanvasState> {
@@ -33,6 +35,7 @@ class Canvas extends React.Component<CanvasProps, CanvasState> {
         canvasCells: new Array<Array<CanvasCellType>>(),
         canvasCellElements: new Array<Array<React.ReactElement<CanvasCell>>>(),
         drawCommands: this.props.drawCommands,
+        prevColor: '',
     };
 
     componentDidMount() {
@@ -43,7 +46,6 @@ class Canvas extends React.Component<CanvasProps, CanvasState> {
         const drawCommands: DrawCommand[] = JSON.parse(JSON.stringify(this.state.drawCommands));
         const drawCommand = drawCommands.shift();
 
-        console.log(drawCommand);
         if (drawCommand) {
             switch (drawCommand.command) {
                 case CommandTypes.C:
@@ -135,11 +137,15 @@ class Canvas extends React.Component<CanvasProps, CanvasState> {
 
     // using trampoline helper to avoid stack overflow
     bucketFill = (fillData: BucketFill) => {
-        const { canvasCells } = this.state;
+        const { canvasCells, prevColor } = this.state;
         const [point, color] = fillData;
-        const startPointContent = canvasCells[point.y - 1][point.x - 1].cellRef!.current!.getFill();
+        const startPointColor = canvasCells[point.y - 1][point.x - 1].cellRef!.current!.getFill();
 
-        trampoline(this.fillCells)(startPointContent, { x: point.x - 1, y: point.y - 1 }, color.color, canvasCells);
+        // avoiding same area repainting with same color
+        if (startPointColor !== prevColor) {
+            trampoline(this.fillCells)(startPointColor, { x: point.x - 1, y: point.y - 1 }, color.color, canvasCells);
+        }
+        this.setState({ prevColor: color.color });
     };
 
     fillCells = (
