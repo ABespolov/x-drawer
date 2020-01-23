@@ -4,7 +4,6 @@ import styles from './Canvas.module.css';
 import CanvasCell, { CanvasCellType } from '../CanvasCell/CanvasCell';
 import { trampoline } from '../../helpers/trampoline';
 import { BucketFill, CanvasSize, CommandTypes, DrawCommand } from '../CommandReader/CommandReader';
-import { strict } from 'assert';
 
 export const MAX_CANVAS_SIZE = { width: 100, height: 100 }; // canvas maximum cells count
 export const MAX_CANVAS_RESOLUTION = { width: 500, height: 500 }; // canvas size in px, cells size calculate dynamically in proportion to width and height
@@ -22,7 +21,7 @@ interface CanvasProps {
 }
 
 interface CanvasState {
-    canvasSize: { width: number; height: number };
+    canvasSize: CanvasSize;
     canvasCells: CanvasCellType[][];
     canvasCellElements: React.ReactElement<CanvasCell>[][];
     drawCommands: DrawCommand[];
@@ -35,7 +34,7 @@ class Canvas extends React.Component<CanvasProps, CanvasState> {
         canvasCells: new Array<Array<CanvasCellType>>(),
         canvasCellElements: new Array<Array<React.ReactElement<CanvasCell>>>(),
         drawCommands: this.props.drawCommands,
-        prevColor: '',
+        prevColor: ' ',
     };
 
     componentDidMount() {

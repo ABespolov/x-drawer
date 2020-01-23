@@ -16,19 +16,19 @@ export type DrawCommand = { command: CommandTypes; data: Point[] | BucketFill | 
 
 interface CommandReaderProps {
     updateDrawCommands: (drawCommands: DrawCommand[]) => void;
-    setDrawComplete: (v: boolean) => void;
-    isDrawComplete: boolean;
 }
 
 interface CommandReaderState {
     commands: string;
     parsingError: boolean;
+    isDrawComplete: boolean;
 }
 
 class CommandReader extends React.Component<CommandReaderProps, CommandReaderState> {
     state = {
         commands: '',
         parsingError: false,
+        isDrawComplete: true,
     };
 
     commandValidation = (commands: string[]): DrawCommand[] => {
@@ -86,25 +86,25 @@ class CommandReader extends React.Component<CommandReaderProps, CommandReaderSta
     };
 
     executeCommands = () => {
-        const commands = this.state.commands.slice().trim();
-        const separateCommands = commands
+        const commands = this.state.commands.slice();
+        const separatedCommands = commands
             .split(/\n+/)
-            .map(command => command.toLocaleLowerCase())
+            .map(command => command.toLocaleLowerCase().trim())
             .filter(command => !/^\s*$/.test(command));
 
-        this.props.setDrawComplete(false);
+        this.setState({ isDrawComplete: false });
 
         // avoiding UI freeze
         setTimeout(() => {
             try {
-                const drawCommands = this.commandValidation(separateCommands);
+                const drawCommands = this.commandValidation(separatedCommands);
 
                 this.props.updateDrawCommands(drawCommands);
-                this.props.setDrawComplete(true);
+                this.setState({ isDrawComplete: true });
                 this.setState({ parsingError: false });
             } catch (e) {
                 console.log(e);
-                this.props.setDrawComplete(true);
+                this.setState({ isDrawComplete: true });
             }
         });
     };
@@ -116,12 +116,13 @@ class CommandReader extends React.Component<CommandReaderProps, CommandReaderSta
     loadFromFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
         e.preventDefault();
         const reader = new FileReader();
+
         reader.onload = async (e: ProgressEvent<FileReader>) => this.setState({ commands: String(e.target!.result) });
         reader.readAsText(e.target.files![0]);
     };
 
     render() {
-        const { isDrawComplete } = this.props;
+        const { isDrawComplete, commands } = this.state;
 
         return (
             <div className={styles.commandInput}>
@@ -131,7 +132,7 @@ class CommandReader extends React.Component<CommandReaderProps, CommandReaderSta
                         className={`textarea has-fixed-size ${this.state.parsingError ? 'is-danger' : ''}`}
                         placeholder="Enter commands here"
                         onChange={this.handleChange}
-                        value={this.state.commands}
+                        value={commands}
                     ></textarea>
                 </div>
                 <div className={styles.commandInput__controls}>
@@ -147,7 +148,7 @@ class CommandReader extends React.Component<CommandReaderProps, CommandReaderSta
                     <div className="file">
                         <label className="file-label">
                             <input
-                                disabled={!isDrawComplete}
+                                value=""
                                 accept=".txt"
                                 className="file-input"
                                 type="file"
