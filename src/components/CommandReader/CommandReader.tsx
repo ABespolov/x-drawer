@@ -158,7 +158,7 @@ class CommandReader extends React.Component<CommandReaderProps, CommandReaderSta
                                 name="resume"
                                 onChange={this.loadFromFile.bind(this)}
                             />
-                            <span className="file-cta">
+                            <span style={{ opacity: isDrawingComplete ? 1 : 0.5 }} className="file-cta">
                                 <span className="file-icon">
                                     <i className="fas fa-upload"></i>
                                 </span>
