@@ -5,6 +5,8 @@
 /.pnp
 .pnp.js
 .idea
+# hermione temp files
+images
 
 # testing
 /coverage
