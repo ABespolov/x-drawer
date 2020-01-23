@@ -62,7 +62,7 @@ export const Validators = {
         }
     },
     brushValidator(command: string, canvasSize: CanvasSize): BucketFill | false {
-        const fillRegExp = new RegExp('^b +[0-9]{1,3} +[0-9]{1,3} [a-z]$');
+        const fillRegExp = new RegExp('^b +[0-9]{1,3} +[0-9]{1,3} +[a-z]$');
 
         if (fillRegExp.test(command)) {
             const fillPoint = command.split(/ +/).slice(1, -1);

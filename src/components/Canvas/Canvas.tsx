@@ -7,7 +7,7 @@ import { BucketFill, CanvasSize, CommandTypes, DrawCommand } from '../CommandRea
 
 export const MAX_CANVAS_SIZE = { width: 100, height: 100 }; // canvas maximum cells count
 export const MAX_CANVAS_RESOLUTION = { width: 500, height: 500 }; // canvas size in px, cells size calculate dynamically in proportion to width and height
-const DRAW_SYMBOL = 'X';
+const DRAW_SYMBOL = 'x';
 
 export type Point = { x: number; y: number };
 
@@ -18,6 +18,7 @@ enum DrawDirections {
 
 interface CanvasProps {
     drawCommands: DrawCommand[];
+    isDrawingComplete: boolean;
 }
 
 interface CanvasState {
@@ -26,6 +27,7 @@ interface CanvasState {
     canvasCellElements: React.ReactElement<CanvasCell>[][];
     drawCommands: DrawCommand[];
     prevColor: string;
+    drawingAsText: string;
 }
 
 class Canvas extends React.Component<CanvasProps, CanvasState> {
@@ -35,6 +37,7 @@ class Canvas extends React.Component<CanvasProps, CanvasState> {
         canvasCellElements: new Array<Array<React.ReactElement<CanvasCell>>>(),
         drawCommands: this.props.drawCommands,
         prevColor: ' ',
+        drawingAsText: '',
     };
 
     componentDidMount() {
@@ -63,7 +66,23 @@ class Canvas extends React.Component<CanvasProps, CanvasState> {
                     break;
             }
 
-            this.setState({ drawCommands }, () => this.draw());
+            this.setState({ drawCommands }, () => {
+                this.addDrawingAsText(drawCommand);
+                this.draw();
+            });
+        }
+    };
+
+    addDrawingAsText = (drawCommand: DrawCommand) => {
+        const drawingAsText = this.generateTextDrawing();
+
+        if (drawCommand.command === CommandTypes.C) {
+            this.setState({ drawingAsText });
+        } else {
+            let prevDrawingAsText = this.state.drawingAsText.slice();
+
+            prevDrawingAsText += drawingAsText;
+            this.setState({ drawingAsText: prevDrawingAsText });
         }
     };
 
@@ -77,7 +96,10 @@ class Canvas extends React.Component<CanvasProps, CanvasState> {
             canvasCellElements.push([]);
             for (let j = 0; j < width; j++) {
                 const cellRef = React.createRef<CanvasCell>();
-                const cellFontSize = MAX_CANVAS_RESOLUTION.width / canvasSize.width;
+                const cellFontSize =
+                    canvasSize.width >= canvasSize.height
+                        ? MAX_CANVAS_RESOLUTION.width / canvasSize.width
+                        : MAX_CANVAS_RESOLUTION.height / canvasSize.height;
 
                 canvasCells[i].push({ cellRef });
                 canvasCellElements[i].push(
@@ -89,7 +111,7 @@ class Canvas extends React.Component<CanvasProps, CanvasState> {
         this.setState({ canvasCells, canvasCellElements, canvasSize });
     };
 
-    drawLine = (points: Point[], isRect?: boolean) => {
+    drawLine = (points: Point[]) => {
         let lineLength = 0;
         let startPoint = 0;
         let drawDirection: DrawDirections = DrawDirections.X;
@@ -178,9 +200,37 @@ class Canvas extends React.Component<CanvasProps, CanvasState> {
         return acc.length === 0 ? [] : acc;
     };
 
+    generateTextDrawing = (): string => {
+        const { width, height } = this.state.canvasSize;
+        const { canvasCells } = this.state;
+        const repeatCount = width > height ? width + 2 : height + 2;
+        let str = '-'.repeat(repeatCount) + '\n';
+
+        for (let i = 0; i < height; i++) {
+            str += '|';
+            for (let j = 0; j < width; j++) {
+                const fill = canvasCells[i][j].cellRef!.current!.getFill() || ' ';
+                str += fill;
+            }
+            str += '|\n';
+        }
+        str += '-'.repeat(repeatCount) + '\n';
+
+        return str;
+    };
+
+    exportDrawing = () => {
+        const element = document.createElement('a');
+        const file = new Blob([this.state.drawingAsText], { type: 'text/plain' });
+
+        element.href = URL.createObjectURL(file);
+        element.download = 'drawing.txt';
+        element.click();
+    };
+
     render() {
         const { width, height } = this.state.canvasSize;
-        const { canvasCellElements, canvasSize } = this.state;
+        const { canvasCellElements, canvasSize, canvasCells } = this.state;
         const scale = { width: 1, height: 1 };
 
         if (canvasSize.width > canvasSize.height) {
@@ -198,8 +248,17 @@ class Canvas extends React.Component<CanvasProps, CanvasState> {
         };
 
         return (
-            <div style={canvasStyle} className={styles.canvas}>
-                {canvasCellElements}
+            <div>
+                <div style={canvasStyle} className={styles.canvas}>
+                    {canvasCellElements}
+                </div>
+                <button
+                    disabled={!this.props.isDrawingComplete || canvasCells.length === 0}
+                    onClick={this.exportDrawing}
+                    className={`button ${styles.canvas__exportButton}`}
+                >
+                    Export
+                </button>
             </div>
         );
     }

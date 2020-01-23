@@ -1,13 +1,13 @@
 .app {
     background: #eee;
-    height: 100vh;
+    min-height: 100vh;
 }
 
 .app__content {
     display: flex;
     justify-content: center;
     align-items: flex-start;
-    padding: 30px;
+    padding: 30px 30px 90px 30px;
 }
 
 .app__header {

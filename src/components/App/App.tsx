@@ -5,26 +5,40 @@ import CommandReader, { DrawCommand } from '../CommandReader/CommandReader';
 
 interface AppState {
     drawCommands: DrawCommand[];
+    isDrawingComplete: boolean;
 }
 
 class App extends React.Component<{}, AppState> {
     state = {
         drawCommands: [],
+        isDrawingComplete: true,
     };
 
     setDrawCommands = (drawCommands: DrawCommand[]) => {
         this.setState({ drawCommands });
     };
 
+    setDrawingComplete = (isDrawingComplete: boolean) => {
+        this.setState({ isDrawingComplete });
+    };
+
     render() {
-        const { drawCommands } = this.state;
+        const { drawCommands, isDrawingComplete } = this.state;
 
         return (
             <div className={styles.app}>
                 <h1 className={`${styles.app__header} is-size-1 has-text-centered`}>X-Drawer</h1>
                 <div className={styles.app__content}>
-                    <Canvas key={JSON.stringify(drawCommands)} drawCommands={drawCommands} />
-                    <CommandReader updateDrawCommands={this.setDrawCommands.bind(this)} />
+                    <Canvas
+                        key={JSON.stringify(drawCommands)}
+                        isDrawingComplete={isDrawingComplete}
+                        drawCommands={drawCommands}
+                    />
+                    <CommandReader
+                        isDrawingComplete={isDrawingComplete}
+                        setDrawingComplete={this.setDrawingComplete.bind(this)}
+                        updateDrawCommands={this.setDrawCommands.bind(this)}
+                    />
                 </div>
             </div>
         );

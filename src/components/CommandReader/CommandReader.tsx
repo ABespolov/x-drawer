@@ -16,19 +16,19 @@ export type DrawCommand = { command: CommandTypes; data: Point[] | BucketFill | 
 
 interface CommandReaderProps {
     updateDrawCommands: (drawCommands: DrawCommand[]) => void;
+    isDrawingComplete: boolean;
+    setDrawingComplete: (v: boolean) => void;
 }
 
 interface CommandReaderState {
     commands: string;
     parsingError: boolean;
-    isDrawComplete: boolean;
 }
 
 class CommandReader extends React.Component<CommandReaderProps, CommandReaderState> {
     state = {
         commands: '',
         parsingError: false,
-        isDrawComplete: true,
     };
 
     commandValidation = (commands: string[]): DrawCommand[] => {
@@ -86,25 +86,26 @@ class CommandReader extends React.Component<CommandReaderProps, CommandReaderSta
     };
 
     executeCommands = () => {
+        const { setDrawingComplete } = this.props;
         const commands = this.state.commands.slice();
         const separatedCommands = commands
             .split(/\n+/)
             .map(command => command.toLocaleLowerCase().trim())
             .filter(command => !/^\s*$/.test(command));
 
-        this.setState({ isDrawComplete: false });
+        setDrawingComplete(false);
 
-        // avoiding UI freeze
+        // avoiding UI freeze, waiting for setDrawingComplete
         setTimeout(() => {
             try {
                 const drawCommands = this.commandValidation(separatedCommands);
 
                 this.props.updateDrawCommands(drawCommands);
-                this.setState({ isDrawComplete: true });
                 this.setState({ parsingError: false });
+                setDrawingComplete(true);
             } catch (e) {
                 console.log(e);
-                this.setState({ isDrawComplete: true });
+                setDrawingComplete(true);
             }
         });
     };
@@ -122,13 +123,14 @@ class CommandReader extends React.Component<CommandReaderProps, CommandReaderSta
     };
 
     render() {
-        const { isDrawComplete, commands } = this.state;
+        const { commands } = this.state;
+        const { isDrawingComplete } = this.props;
 
         return (
             <div className={styles.commandInput}>
-                <div className={`control ${styles.commandInput__control} ${!isDrawComplete ? 'is-loading' : ''}`}>
+                <div className={`control ${styles.commandInput__control} ${!isDrawingComplete ? 'is-loading' : ''}`}>
                     <textarea
-                        disabled={!isDrawComplete}
+                        disabled={!isDrawingComplete}
                         className={`textarea has-fixed-size ${this.state.parsingError ? 'is-danger' : ''}`}
                         placeholder="Enter commands here"
                         onChange={this.handleChange}
@@ -137,10 +139,10 @@ class CommandReader extends React.Component<CommandReaderProps, CommandReaderSta
                 </div>
                 <div className={styles.commandInput__controls}>
                     <button
-                        disabled={!isDrawComplete}
+                        disabled={!isDrawingComplete}
                         onClick={this.executeCommands}
                         className={`${styles.commandInput__button} ${
-                            !isDrawComplete ? 'is-loading' : ''
+                            !isDrawingComplete ? 'is-loading' : ''
                         } button is-primary`}
                     >
                         Let&apos;s draw
@@ -148,6 +150,7 @@ class CommandReader extends React.Component<CommandReaderProps, CommandReaderSta
                     <div className="file">
                         <label className="file-label">
                             <input
+                                disabled={!isDrawingComplete}
                                 value=""
                                 accept=".txt"
                                 className="file-input"
@@ -159,7 +162,7 @@ class CommandReader extends React.Component<CommandReaderProps, CommandReaderSta
                                 <span className="file-icon">
                                     <i className="fas fa-upload"></i>
                                 </span>
-                                <span className="file-label">Load config...</span>
+                                <span className="file-label">Load commands...</span>
                             </span>
                         </label>
                     </div>
