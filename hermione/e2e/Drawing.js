@@ -2,7 +2,7 @@
 const path = require('path');
 const filePath = path.join(__dirname, 'input.txt');
 
-it('Set the value of an input field and drawing', function() {
+it('Set the value of textarea and drawing', function() {
     return this.browser
         .url('/')
         .setValue('textarea', 'C 20 4\n' + 'L 1 2 6 2\n' + 'L 6 3 6 4\n' + 'R 16 1 20 3\n' + 'B 10 3 o')
@@ -10,7 +10,7 @@ it('Set the value of an input field and drawing', function() {
         .assertView('Canvas', '[class*="canvas"]');
 });
 
-it('Set the value of an input from file and drawing', function() {
+it('Set the value of textarea from file and drawing', function() {
     return this.browser
         .url('/')
         .chooseFile('.file-input', filePath)

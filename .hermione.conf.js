@@ -14,7 +14,7 @@ module.exports = {
             desiredCapabilities: {
                 browserName: 'chrome',
                 chromeOptions: {
-                    args: ['--remote-debugging-port=9225'],
+                    args: ['--remote-debugging-port=9225', '--headless'],
                 },
             },
             windowSize: '1300x900',
