@@ -10,8 +10,8 @@ export const Validators = {
             const canvasSize: CanvasSize = { width: +canvasSizeArr[0], height: +canvasSizeArr[1] };
 
             if (
-                canvasSize.width > 0 &&
-                canvasSize.height > 0 &&
+                canvasSize.width > 1 &&
+                canvasSize.height > 1 &&
                 canvasSize.width <= maxCanvasSize.width &&
                 canvasSize.height <= maxCanvasSize.height
             ) {
