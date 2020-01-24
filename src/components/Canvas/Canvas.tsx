@@ -45,8 +45,10 @@ class Canvas extends React.Component<CanvasProps, CanvasState> {
     }
 
     draw = () => {
+        const { prevColor, canvasCells } = this.state;
         const drawCommands: DrawCommand[] = JSON.parse(JSON.stringify(this.state.drawCommands));
         const drawCommand = drawCommands.shift();
+        let drawColor = ' ';
 
         if (drawCommand) {
             switch (drawCommand.command) {
@@ -60,13 +62,21 @@ class Canvas extends React.Component<CanvasProps, CanvasState> {
                     this.drawRect(drawCommand.data as Point[]);
                     break;
                 case CommandTypes.B:
-                    this.bucketFill(drawCommand.data as BucketFill);
+                    // avoiding same area with same color repainting
+                    const point = (drawCommand.data as BucketFill)[0];
+                    const startPointColor = canvasCells[point.y - 1][point.x - 1].cellRef!.current!.getFill();
+
+                    drawColor = (drawCommand.data as BucketFill)[1].color;
+                    if (prevColor !== drawColor || startPointColor !== drawColor) {
+                        this.bucketFill(drawCommand.data as BucketFill, startPointColor);
+                    }
                     break;
                 default:
                     break;
             }
 
-            this.setState({ drawCommands }, () => {
+            // after drawing command completed, updating state first, than continue drawing
+            this.setState({ prevColor: drawColor, drawCommands }, () => {
                 this.addDrawingAsText(drawCommand);
                 this.draw();
             });
@@ -157,16 +167,11 @@ class Canvas extends React.Component<CanvasProps, CanvasState> {
     };
 
     // using trampoline helper to avoid stack overflow
-    bucketFill = (fillData: BucketFill) => {
-        const { canvasCells, prevColor } = this.state;
+    bucketFill = (fillData: BucketFill, startPointColor: string) => {
+        const { canvasCells } = this.state;
         const [point, color] = fillData;
-        const startPointColor = canvasCells[point.y - 1][point.x - 1].cellRef!.current!.getFill();
 
-        // avoiding same area repainting with same color
-        if (startPointColor !== prevColor) {
-            trampoline(this.fillCells)(startPointColor, { x: point.x - 1, y: point.y - 1 }, color.color, canvasCells);
-        }
-        this.setState({ prevColor: color.color });
+        trampoline(this.fillCells)(startPointColor, { x: point.x - 1, y: point.y - 1 }, color.color, canvasCells);
     };
 
     fillCells = (
