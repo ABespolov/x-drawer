@@ -25,4 +25,24 @@ describe('Canvas', () => {
 
         expect(canvas.state('canvasSize') as CanvasSize).to.deep.equal(canvasSize);
     });
+
+    it('Line drawing', () => {
+        expect(instance.drawLine).to.be.an('Function');
+        /*** there is no way to test because of refs ***/
+    });
+
+    it('Rect drawing', () => {
+        expect(instance.drawRect).to.be.an('Function');
+        /*** there is no way to test because of refs ***/
+    });
+
+    it('Bucket fill', () => {
+        expect(instance.bucketFill).to.be.an('Function');
+        /*** there is no way to test because of refs ***/
+    });
+
+    it('Generate text from drawing', () => {
+        expect(instance.generateTextDrawing).to.be.an('Function');
+        /*** there is no way to test because of refs ***/
+    });
 });

@@ -46,7 +46,12 @@ class App extends React.Component<{}, AppState> {
                         rel="noopener noreferrer"
                         target="_blank"
                     >
-                        Need help?
+                        Commands list
+                    </a>
+                    <br />
+                    <strong>Author: </strong>
+                    <a href="https://github.com/ABespolov" rel="noopener noreferrer" target="_blank">
+                        Artem Bespolov
                     </a>
                 </h2>
             </div>
