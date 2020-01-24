@@ -1,17 +1,19 @@
-X-Drawer [live demo](https://x-drawer.herokuapp.com/).
+X-Drawer [live demo](https://x-drawer.herokuapp.com/)
 
 ## Available Scripts
 
 Runs the app in the development mode:
 ### `npm start`
+:warning: To start the app you need to update react-dev-utils on latest version,<br />
+currently react-dev-utils@9.0.0 is installed to be able to deploy the app on heroku, because of create-react-app [bug](https://github.com/facebook/create-react-app/pull/8079/)
 
 Unit testing with Enzyme:
 ### `npm test`
 
 E2E testing with Hermione:
 ### `hermione`
-:warning:Hermione needs additional software installation<br />
-[Check this](https://brainhub.eu/blog/regression-testing-with-selenium/) for more information.
+:warning: Hermione needs additional software installation<br />
+[Check this](https://brainhub.eu/blog/regression-testing-with-selenium/) for more information
 
 ## Сommands list 
 
