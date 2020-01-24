@@ -40,6 +40,15 @@ class App extends React.Component<{}, AppState> {
                         updateDrawCommands={this.setDrawCommands.bind(this)}
                     />
                 </div>
+                <h2 className={`${styles.app__help} is-size-7 has-text-centered`}>
+                    <a
+                        href="https://github.com/ABespolov/x-drawer#%D1%81ommands-list"
+                        rel="noopener noreferrer"
+                        target="_blank"
+                    >
+                        Need help?
+                    </a>
+                </h2>
             </div>
         );
     }

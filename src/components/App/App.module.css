@@ -16,3 +16,9 @@
     background: #fff;
     user-select: none;
 }
+
+.app__help {
+    background: #fff;
+    height: 300%;
+    padding: 15px 0;
+}
