@@ -5,7 +5,7 @@ X-Drawer [live demo](https://x-drawer.herokuapp.com/)
 Runs the app in the development mode:
 ### `npm start`
 :warning: To start the app you need to update react-dev-utils on latest version,<br />
-currently react-dev-utils@9.0.0 is installed to be able to deploy the app on heroku, because of create-react-app [bug](https://github.com/facebook/create-react-app/pull/8079/)
+currently react-dev-utils@9.0.0 is installed to be able to deploy the app on heroku, because of create-react-app [bug](https://github.com/facebook/create-react-app/issues/8075)
 
 Unit testing with Enzyme:
 ### `npm test`
