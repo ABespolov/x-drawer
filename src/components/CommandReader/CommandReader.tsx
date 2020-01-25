@@ -34,7 +34,7 @@ class CommandReader extends React.Component<CommandReaderProps, CommandReaderSta
     commandValidation = (commands: string[]): DrawCommand[] => {
         const drawCommands: DrawCommand[] = [];
         let canvasSize = { width: 0, height: 0 };
-        let validationData: DrawCommand['data'] | false = { width: 0, height: 0 };
+        let validationData: DrawCommand['data'] | false = false;
 
         commands.forEach((command, index) => {
             switch (command[0]) {
@@ -87,7 +87,7 @@ class CommandReader extends React.Component<CommandReaderProps, CommandReaderSta
 
     executeCommands = () => {
         const { setDrawingComplete } = this.props;
-        const commands = this.state.commands.slice();
+        const { commands } = this.state;
         const separatedCommands = commands
             .split(/\n+/)
             .map(command => command.toLocaleLowerCase().trim())
@@ -95,7 +95,7 @@ class CommandReader extends React.Component<CommandReaderProps, CommandReaderSta
 
         setDrawingComplete(false);
 
-        // avoiding UI freeze, waiting for setDrawingComplete
+        // avoid UI freeze, waiting for state change by setDrawingComplete
         setTimeout(() => {
             try {
                 const drawCommands = this.commandValidation(separatedCommands);

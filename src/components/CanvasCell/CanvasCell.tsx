@@ -22,7 +22,7 @@ class CanvasCell extends React.Component<CanvasCellProps, {}> {
         this.myRef.current!.innerHTML = symbol;
     };
 
-    getFill = () => {
+    getColor = () => {
         return this.myRef.current!.innerHTML;
     };
 

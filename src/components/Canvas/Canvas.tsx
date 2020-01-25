@@ -4,6 +4,7 @@ import styles from './Canvas.module.css';
 import CanvasCell, { CanvasCellType } from '../CanvasCell/CanvasCell';
 import { trampoline } from '../../helpers/trampoline';
 import { BucketFill, CanvasSize, CommandTypes, DrawCommand } from '../CommandReader/CommandReader';
+import { canvasCellCalculator } from '../../helpers/canvasCellCalculator';
 
 export const MAX_CANVAS_SIZE = { width: 100, height: 100 }; // canvas maximum cells count
 export const MAX_CANVAS_RESOLUTION = { width: 500, height: 500 }; // canvas size in px, cells size calculate dynamically in proportion to width and height
@@ -23,32 +24,34 @@ interface CanvasProps {
 
 interface CanvasState {
     canvasSize: CanvasSize;
-    canvasCells: CanvasCellType[][];
-    canvasCellElements: React.ReactElement<CanvasCell>[][];
     drawCommands: DrawCommand[];
-    prevColor: string;
-    drawingAsText: string;
 }
 
+// store elements and refs to them in the class fields, because an imperative approach
+// for Canvas component is most likely the best solution despite react philosophy
 class Canvas extends React.Component<CanvasProps, CanvasState> {
+    canvasCellElements: React.ReactElement[][];
+    canvasCells: CanvasCellType[][];
+    drawingAsText: string;
     state = {
         canvasSize: { width: 1, height: 1 },
-        canvasCells: new Array<Array<CanvasCellType>>(),
-        canvasCellElements: new Array<Array<React.ReactElement<CanvasCell>>>(),
         drawCommands: this.props.drawCommands,
-        prevColor: ' ',
-        drawingAsText: '',
     };
+
+    constructor(props: CanvasProps) {
+        super(props);
+        this.drawingAsText = '';
+        this.canvasCells = new Array<Array<CanvasCellType>>();
+        this.canvasCellElements = new Array<Array<React.ReactElement<CanvasCell>>>();
+    }
 
     componentDidMount() {
         this.draw();
     }
 
     draw = () => {
-        const { prevColor, canvasCells } = this.state;
         const drawCommands: DrawCommand[] = JSON.parse(JSON.stringify(this.state.drawCommands));
         const drawCommand = drawCommands.shift();
-        let drawColor = ' ';
 
         if (drawCommand) {
             switch (drawCommand.command) {
@@ -62,21 +65,13 @@ class Canvas extends React.Component<CanvasProps, CanvasState> {
                     this.drawRect(drawCommand.data as Point[]);
                     break;
                 case CommandTypes.B:
-                    // avoiding same area with same color repainting
-                    const point = (drawCommand.data as BucketFill)[0];
-                    const startPointColor = canvasCells[point.y - 1][point.x - 1].cellRef!.current!.getFill();
-
-                    drawColor = (drawCommand.data as BucketFill)[1].color;
-                    if (prevColor !== drawColor || startPointColor !== drawColor) {
-                        this.bucketFill(drawCommand.data as BucketFill, startPointColor);
-                    }
+                    this.bucketFill(drawCommand.data as BucketFill);
                     break;
                 default:
                     break;
             }
 
-            // after drawing command completed, updating state first, than continue drawing
-            this.setState({ prevColor: drawColor, drawCommands }, () => {
+            this.setState({ drawCommands }, () => {
                 this.addDrawingAsText(drawCommand);
                 this.draw();
             });
@@ -87,45 +82,38 @@ class Canvas extends React.Component<CanvasProps, CanvasState> {
         const drawingAsText = this.generateTextDrawing();
 
         if (drawCommand.command === CommandTypes.C) {
-            this.setState({ drawingAsText });
+            this.drawingAsText = drawingAsText;
         } else {
-            let prevDrawingAsText = this.state.drawingAsText.slice();
-
-            prevDrawingAsText += drawingAsText;
-            this.setState({ drawingAsText: prevDrawingAsText });
+            this.drawingAsText += drawingAsText;
         }
     };
 
     generateCanvas = (canvasSize: CanvasSize) => {
         const { width, height } = canvasSize;
-        const canvasCells: CanvasState['canvasCells'] = [];
-        const canvasCellElements: React.ReactElement[][] = [];
+        const cellFontSize =
+            canvasSize.width >= canvasSize.height
+                ? MAX_CANVAS_RESOLUTION.width / canvasSize.width
+                : MAX_CANVAS_RESOLUTION.height / canvasSize.height;
 
         for (let i = 0; i < height; i++) {
-            canvasCells.push([]);
-            canvasCellElements.push([]);
+            this.canvasCells.push([]);
+            this.canvasCellElements.push([]);
             for (let j = 0; j < width; j++) {
                 const cellRef = React.createRef<CanvasCell>();
-                const cellFontSize =
-                    canvasSize.width >= canvasSize.height
-                        ? MAX_CANVAS_RESOLUTION.width / canvasSize.width
-                        : MAX_CANVAS_RESOLUTION.height / canvasSize.height;
 
-                canvasCells[i].push({ cellRef });
-                canvasCellElements[i].push(
-                    <CanvasCell fontSize={cellFontSize} ref={canvasCells[i][j].cellRef} key={i + '' + j} />,
+                this.canvasCells[i].push({ cellRef });
+                this.canvasCellElements[i].push(
+                    <CanvasCell fontSize={cellFontSize} ref={this.canvasCells[i][j].cellRef} key={i + '' + j} />,
                 );
             }
         }
-
-        this.setState({ canvasCells, canvasCellElements, canvasSize });
+        this.setState({ canvasSize });
     };
 
     drawLine = (points: Point[]) => {
         let lineLength = 0;
         let startPoint = 0;
         let drawDirection: DrawDirections = DrawDirections.X;
-        const canvasCells = [...this.state.canvasCells];
         const [point1, point2] = points;
 
         if (point2.x - point1.x !== 0) {
@@ -139,13 +127,11 @@ class Canvas extends React.Component<CanvasProps, CanvasState> {
 
         for (let i = startPoint; i <= lineLength + startPoint; i++) {
             if (drawDirection === DrawDirections.X) {
-                canvasCells[point1.y - 1][i - 1].cellRef!.current!.fillSelf(DRAW_SYMBOL);
+                this.canvasCells[point1.y - 1][i - 1].cellRef!.current!.fillSelf(DRAW_SYMBOL);
             } else {
-                canvasCells[i - 1][point1.x - 1].cellRef!.current!.fillSelf(DRAW_SYMBOL);
+                this.canvasCells[i - 1][point1.x - 1].cellRef!.current!.fillSelf(DRAW_SYMBOL);
             }
         }
-
-        this.setState({ canvasCells });
     };
 
     drawRect = (points: Point[]) => {
@@ -166,26 +152,33 @@ class Canvas extends React.Component<CanvasProps, CanvasState> {
         rectangleSides.forEach(side => this.drawLine([side.point1, side.point2]));
     };
 
-    // using trampoline helper to avoid stack overflow
-    bucketFill = (fillData: BucketFill, startPointColor: string) => {
-        const { canvasCells } = this.state;
-        const [point, color] = fillData;
+    bucketFill = (fillData: BucketFill) => {
+        const [point, fillColor] = fillData;
+        const startPointColor = this.canvasCells[point.y - 1][point.x - 1].cellRef!.current!.getColor();
 
-        trampoline(this.fillCells)(startPointColor, { x: point.x - 1, y: point.y - 1 }, color.color, canvasCells);
+        // using trampoline helper to avoid stack overflow
+        trampoline(this.fillCells)(
+            startPointColor,
+            { x: point.x - 1, y: point.y - 1 },
+            fillColor.color,
+            this.canvasCells,
+        );
     };
 
     fillCells = (
-        startPointContent: string,
+        startPointColor: string,
         { x, y }: Point,
-        color: string,
-        canvasCells: CanvasState['canvasCells'],
+        fillColor: string,
+        canvasCells: CanvasCellType[][],
     ): [] | Function[] => {
         const { canvasSize } = this.state;
         const acc: Function[] = [];
         const addFn = ({ x, y }: Point) => {
-            if (canvasCells[y][x].cellRef.current!.getFill() === startPointContent) {
-                canvasCells[y][x].cellRef.current!.fillSelf(color);
-                acc.push(() => this.fillCells(startPointContent, { x, y }, color, canvasCells));
+            const currCell = canvasCells[y][x].cellRef.current!;
+
+            if (currCell.getColor() === startPointColor && startPointColor !== fillColor) {
+                currCell.fillSelf(fillColor);
+                acc.push(() => this.fillCells(startPointColor, { x, y }, fillColor, canvasCells));
             }
         };
 
@@ -207,14 +200,13 @@ class Canvas extends React.Component<CanvasProps, CanvasState> {
 
     generateTextDrawing = (): string => {
         const { width, height } = this.state.canvasSize;
-        const { canvasCells } = this.state;
         const repeatCount = width > height ? width + 2 : height + 2;
         let str = '-'.repeat(repeatCount) + '\n';
 
         for (let i = 0; i < height; i++) {
             str += '|';
             for (let j = 0; j < width; j++) {
-                const fill = canvasCells[i][j].cellRef!.current!.getFill() || ' ';
+                const fill = this.canvasCells[i][j].cellRef!.current!.getColor() || ' ';
                 str += fill;
             }
             str += '|\n';
@@ -226,7 +218,7 @@ class Canvas extends React.Component<CanvasProps, CanvasState> {
 
     exportDrawing = () => {
         const element = document.createElement('a');
-        const file = new Blob([this.state.drawingAsText], { type: 'text/plain' });
+        const file = new Blob([this.drawingAsText], { type: 'text/plain' });
 
         element.href = URL.createObjectURL(file);
         element.download = 'drawing.txt';
@@ -235,30 +227,21 @@ class Canvas extends React.Component<CanvasProps, CanvasState> {
 
     render() {
         const { width, height } = this.state.canvasSize;
-        const { canvasCellElements, canvasSize, canvasCells } = this.state;
-        const scale = { width: 1, height: 1 };
-
-        if (canvasSize.width > canvasSize.height) {
-            scale.width = canvasSize.width / canvasSize.height;
-        } else {
-            scale.height = canvasSize.height / canvasSize.width;
-        }
-
+        const { canvasSize } = this.state;
+        const cellSize = canvasCellCalculator(canvasSize);
         const canvasStyle = {
             width: MAX_CANVAS_RESOLUTION.width,
             height: MAX_CANVAS_RESOLUTION.height,
-            gridTemplate: `repeat(${height}, ${MAX_CANVAS_RESOLUTION.height /
-                canvasSize.height /
-                scale.width}px) / repeat(${width}, ${MAX_CANVAS_RESOLUTION.width / canvasSize.width / scale.height}px)`,
+            gridTemplate: `repeat(${height}, ${cellSize.height}px) / repeat(${width}, ${cellSize.width}px)`,
         };
 
         return (
             <div>
                 <div style={canvasStyle} className={styles.canvas}>
-                    {canvasCellElements}
+                    {this.canvasCellElements}
                 </div>
                 <button
-                    disabled={!this.props.isDrawingComplete || canvasCells.length === 0}
+                    disabled={!this.props.isDrawingComplete || this.canvasCells.length === 0}
                     onClick={this.exportDrawing}
                     className={`button ${styles.canvas__exportButton}`}
                 >

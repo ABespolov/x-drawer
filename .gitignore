@@ -8,6 +8,7 @@
 .idea
 # hermione temp files
 images
+hermione/hermione-reports
 
 # testing
 /coverage

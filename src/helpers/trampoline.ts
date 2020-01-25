@@ -1,8 +1,7 @@
 export const trampoline = (fn: Function) => (...args: any) => {
     let result = fn(...args);
-    const checkComplete = () => result.some((fn: Function | []) => typeof fn === 'function');
 
-    while (result.length && checkComplete()) {
+    while (result.length > 0) {
         result = result.reduce(
             (acc: [], fn: Function | []) => (typeof fn === 'function' ? [...acc, ...fn()] : acc),
             [],
